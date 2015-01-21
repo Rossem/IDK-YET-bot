@@ -2,8 +2,6 @@ import PIL
 from PIL import Image
 from PIL import ImageDraw
 
-import ImageMagick
-
 from quad_constants import * #constants
 
 import heapq
@@ -22,6 +20,12 @@ def avg(histogram):
         value += i * x
 
     value /= total
+    error = 0
+    for i, x in enumerate(histogram):
+        error += x * (value - i) ** 2
+
+    error /= total
+
     error = error ** 0.5
     
     return value, error
@@ -84,7 +88,7 @@ class Quad(object):
         tl = Quad(self.model, (l,t,lr,tb), depth)
         tr = Quad(self.model, (lr,t,r,tb), depth)
         bl = Quad(self.model, (l,tb,lr,b), depth)
-        br = Quad(self.modelm (lr,tb,r,b), depth)
+        br = Quad(self.model, (lr,tb,r,b), depth)
 
         self.children = (tl,tr,bl,br)
         
@@ -93,7 +97,7 @@ class Quad(object):
     def get_leaf_nodes(self, max_depth=None):
         if not self.children:
             return [self]
-        if max_depth is not Nine and self.depth >= max_depth:
+        if max_depth is not None and self.depth >= max_depth:
             return [self]
         result = []
         
@@ -105,9 +109,51 @@ class Quad(object):
 
 class ImageModel(object):
 
-    def __init__(self):
-        pass
+    def __init__(self, path):
+        self.im = Image.open(path).convert('RGB')
+        self.width, self.height = self.im.size
+        self.heap = []
+        self.root = Quad(self, (0,0, self.width, self.height), 0)
+        self.error_sum = self.root.error * self.root.area
+        self.push(self.root)
 
+    
+    @property #adds property version to quads
+    def quads(self):
+        return [x[-1] for x in self.heap]
 
+    def average_error(self):
+        return self.error_sum / (self.width * self.height)
 
+    def push(self, quad):
+        score = -quad.error * (quad.area ** AREA_POWER)
+        heapq.heappush(self.heap, (quad.leaf, score, quad))
 
+    def pop(self):
+        return heapq.heappop(self.heap)[-1]
+
+    def split(self):
+        quad = self.pop()
+
+        self.error_sum -= quad.error * quad.area
+        children = quad.split()
+        for child in children:
+            self.push(child)
+            self.error_sum += child.error * child.area
+
+    def render(self, path, max_depth=None):
+        m = OUTPUT_SCALE
+        dx, dy = (PADDING, PADDING)
+        
+        im = Image.new('RGB', (self.width * m, self.height * m), FILL_COLOR)
+
+        draw = ImageDraw.Draw(im)
+        draw.rectangle((0,0, self.width * m, self.height * m), FILL_COLOR)
+        
+        for quad in self.root.get_leaf_nodes(max_depth):
+            l,t,r,b = quad.box
+            box = (l*m + dx, t*m + dy, r*m - 1, b*m - 1)
+            draw.rectangle(box, quad.color)
+
+        del draw
+        im.save(path, 'PNG')
