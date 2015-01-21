@@ -1,2 +1,3 @@
-# IDK-YET-bot
-Reddit bot, will probably involve some sort of image processing including the PIL library. swag
+# QUADBot
+
+A reddit bot which decomposes images using the quadtree data structure.
