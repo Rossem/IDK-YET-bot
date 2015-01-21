@@ -9,49 +9,35 @@ import sys
 
 
 #---------------------------------------------
-#Helper functions
+#Helper functions for histograms
 
 def avg(histogram):
-    
+    """this functions get the weighted average of a histogram"""
+
     total = sum(histogram)
     value = 0
 
     for i, x in enumerate(histogram):
         value += i * x
-
     value /= total
+
     error = 0
     for i, x in enumerate(histogram):
         error += x * (value - i) ** 2
-
     error /= total
-
     error = error ** 0.5
     
     return value, error
 
 def get_color_histogram(histogram):
+    """this function gets the color from a histogram"""
+
     r, r1 = avg(histogram[:256])
     g, g1 = avg(histogram[256:512])
     b, b1 = avg(histogram[512:768])
-    
     e1 = r1 * 0.2989 + g1 * 0.5870 + b1 * 0.1140
 
     return (r,g,b), e1
-
-def rnd_rectangle(draw, box, radius, color):
-    l,t,r,b = box
-    d = radius * 2
-
-    draw.ellipse((l, t, l + d, t + d), color)
-    draw.ellipse((r - d, t, r, t + d), color)
-    draw.ellipse((l, b - d, l + d, b), color)
-    draw.ellipse((r - d, b - d, r, b), color)
-
-    d = radius
-
-    draw.rectangle((l, t + d, r, b - d), color)
-    draw.rectangle((l + d, t, r - d, b), color)
 
 #---------------------------------------------
 #Classes
@@ -63,7 +49,7 @@ class Quad(object):
         self.box = box
         self.depth = depth
 
-        hist = self.model.im.crop(self.box).histogram()
+        hist = self.model.im.crop(self.box).histogram() #returns the histogram of the image
         self.color, self.error = get_color_histogram(hist)
         self.leaf = self.is_leaf()
         self.area = self.get_area()
@@ -79,6 +65,8 @@ class Quad(object):
         return (r-l) * (b-t)
 
     def split(self):
+        """splits the image into a quad, compresses by 2^N"""
+
         l,t,r,b = self.box
         lr = l + (r-l)/2
         tb = t + (b-t)/2
@@ -142,6 +130,8 @@ class ImageModel(object):
             self.error_sum += child.error * child.area
 
     def render(self, path, max_depth=None):
+        """creates new image"""
+
         m = OUTPUT_SCALE
         dx, dy = (PADDING, PADDING)
         
@@ -157,3 +147,6 @@ class ImageModel(object):
 
         del draw
         im.save(path, 'PNG')
+
+
+
