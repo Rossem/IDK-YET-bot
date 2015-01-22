@@ -1,2 +1,2 @@
-username = "QUADTreeBot"
-password = "quadtree"
+username = ""
+password = ""

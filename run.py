@@ -153,5 +153,5 @@ run()
 while True:
     main()
     print "Waiting " + str(WAIT) + " seconds"
-    time.sleep(WAIT)
+    #time.sleep(WAIT)
 
