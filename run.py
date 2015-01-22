@@ -75,10 +75,16 @@ def main():
             print "Fetching url"
             img_url = submission.url
 
-            if "imgur" in img_url:
+            if "imgur" in img_url and (".jpg" in img_url or ".jpeg" in img_url or ".png" in img_url):
+
+                print img_url
 
                 k = img_url.rfind("/")
                 img_name = img_url[k+1:]
+                print submission.title
+                print k 
+                print img_name
+
                 #data = urllib.urlretrieve(img_url, img_name)
 
                 response = requests.get(img_url, stream=True)
@@ -118,19 +124,36 @@ def main():
                         cant_comment = False
 
                     except praw.errors.RateLimitExceeded as error:
-                        print "\tSleeping for %d seconds" % error.sleep_time
-                        time.sleep(error.sleep_time)
+                        #print "\tSleeping for %d seconds" % error.sleep_time
+                        #time.sleep(error.sleep_time)
+                        t = round(error.sleep_time) + 1
+                        print error.sleep_time
+                        _t = int(t)
+                        print t 
+                        print _t
+                        #time = int(time) + 1 
+                        countdown(_t)
 
                 print "Done submission: " + submission.title
 
             else:
-                print "Not an imgur image"
+                print "Not an imgur image/gallery"
 
             cur.execute('INSERT INTO oldposts VALUES(?)', [sid])
             sql.commit()
+            cleanup()
                     
                     
+def cleanup():
+    subprocess.call(["rm", "*.png"])
+    subprocess.call(["rm", "*.jpg"])
+    subprocess.call(["rm", "*.jpeg"])
 
+def countdown(t):
+    for i in range(t, 0, -1):
+        time.sleep(1)
+        sys.stdout.write(str(i) + ' ')
+        sys.stdout.flush()
 
 """
 
@@ -152,6 +175,6 @@ run()
 
 while True:
     main()
-    print "Waiting " + str(WAIT) + " seconds"
+    #print "Waiting " + str(WAIT) + " seconds"
     #time.sleep(WAIT)
 
