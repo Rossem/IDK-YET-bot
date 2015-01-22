@@ -1,0 +1,2 @@
+username = "QUADTreeBot"
+password = "quadtree"
