@@ -21,8 +21,9 @@ import time
 USERNAME = bot.username
 PASSWORD = bot.password
 USERAGENT = "/u/" + bot.username + " QUAD Tree image bot"
-SUBREDDIT = "pics"
-MAXPOSTS = 25
+#SUBREDDIT = "pics" welp i got banned from /r/pics o well
+SUBREDDIT = "images"
+MAXPOSTS = 150 
 
 WAIT = 300
 
@@ -67,9 +68,12 @@ def main():
         submissions = subreddit.get_new(limit=MAXPOSTS)
 
     for submission in submissions:
+        print "Fetching submission"
 
         sid = submission.id
         cur.execute('SELECT * FROM oldposts WHERE ID=?', [sid])
+
+        "checking if already commented"
 
         if not cur.fetchone():
             print "Fetching url"
@@ -77,15 +81,9 @@ def main():
 
             if "imgur" in img_url and (".jpg" in img_url or ".jpeg" in img_url or ".png" in img_url):
 
-                print img_url
 
                 k = img_url.rfind("/")
                 img_name = img_url[k+1:]
-                print submission.title
-                print k 
-                print img_name
-
-                #data = urllib.urlretrieve(img_url, img_name)
 
                 response = requests.get(img_url, stream=True)
                 with open(img_name, 'wb') as out_file:
@@ -113,8 +111,7 @@ def main():
                 new_img_url = client.upload_from_path('QUAD' + img_name)
 
                 nl = "\n\n"
-                comment = "[Converted to Quad Tree](" + new_img_url['link'] + ")" + nl*3 + "---" + nl*2 + "Info: this message was submitted by a bot" #+ nl*2 + "Feedback/comments/problems greatly appreciated: AskeeBot@gmail.com"
-
+                comment = "[Converted to Quad Tree](" + new_img_url['link'] + ")" + nl*3 + "---" + nl*2 + "Info: this message was submitted by a bot" 
                 #if i cant comment due to overlimiting requests
                 cant_comment = True
 
@@ -124,14 +121,8 @@ def main():
                         cant_comment = False
 
                     except praw.errors.RateLimitExceeded as error:
-                        #print "\tSleeping for %d seconds" % error.sleep_time
-                        #time.sleep(error.sleep_time)
                         t = round(error.sleep_time) + 1
-                        print error.sleep_time
                         _t = int(t)
-                        print t 
-                        print _t
-                        #time = int(time) + 1 
                         countdown(_t)
 
                 print "Done submission: " + submission.title
@@ -154,24 +145,6 @@ def countdown(t):
         time.sleep(1)
         sys.stdout.write(str(i) + ' ')
         sys.stdout.flush()
-
-"""
-
-    model = ImageModel(filename)
-    previous = None
-    
-    for i in range(ITERATIONS):
-        error = model.average_error()
-        if previous is None or previous - error > ERROR_RATE:
-            print i, error
-            if SAVE_FRAMES:
-                model.render('frames/%06d.png' % i)
-            previous = error
-        model.split()
-    model.render('QUAD' + filename)
-
-run()
-"""        
 
 while True:
     main()
