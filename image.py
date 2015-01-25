@@ -7,6 +7,8 @@ from quad_constants import * #constants
 import heapq
 import sys
 
+global new_img_name
+
 
 #---------------------------------------------
 #Helper functions for histograms
@@ -149,4 +151,25 @@ class ImageModel(object):
         im.save(path, 'PNG')
 
 
+def convert_image(img_name):
+    """Converts image to its quadtree decomp. representation."""
 
+    img = ImageModel(img_name)
+    previous = None
+
+    for i in range(ITERATIONS):
+        error = img.average_error()
+
+        if previous is None or previous - error > ERROR_RATE:
+            #print i, error
+    
+            if SAVE_FRAMES:
+                img.render('frames/%06d.png' % i)
+
+            previous = error 
+
+        img.split()
+    print "Finished splitting image" 
+    
+    new_img_name = 'QUAD' + img_name
+    img.render(new_img_name)

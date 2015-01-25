@@ -90,6 +90,8 @@ def main():
                     shutil.copyfileobj(response.raw, out_file)
                 del response
 
+                """
+
                 img = ImageModel(img_name)
                 previous = None
 
@@ -97,7 +99,7 @@ def main():
                     error = img.average_error()
 
                     if previous is None or previous - error > ERROR_RATE:
-                        print i, error
+                        #print i, error
                         
                         if SAVE_FRAMES:
                             img.render('frames/%06d.png' % i)
@@ -105,8 +107,13 @@ def main():
                         previouse = error 
                     
                     img.split()
+                print "Finished splitting image"
+
+                new_img_name = 'QUAD' + img_name
+                img.render(new_img_name)
+                """
                 
-                img.render('QUAD' + img_name)
+                convert_image(img_name)
 
                 new_img_url = client.upload_from_path('QUAD' + img_name)
 
@@ -125,20 +132,23 @@ def main():
                         _t = int(t)
                         countdown(_t)
 
-                print "Done submission: " + submission.title
+                print "Cleaning up files"
+                try:    
+                    cleanup(img_name, new_img_name)
+                except NameError:
+                    pass
+                print "\tDone submission: " + submission.title
 
             else:
                 print "Not an imgur image/gallery"
 
             cur.execute('INSERT INTO oldposts VALUES(?)', [sid])
             sql.commit()
-            cleanup()
                     
                     
-def cleanup():
-    subprocess.call(["rm", "*.png"])
-    subprocess.call(["rm", "*.jpg"])
-    subprocess.call(["rm", "*.jpeg"])
+def cleanup(old, new):
+    subprocess.call(["rm", old])
+    subprocess.call(["rm", new])
 
 def countdown(t):
     for i in range(t, 0, -1):
