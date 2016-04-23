@@ -1,48 +1,19 @@
-import PIL
-from PIL import Image
-from PIL import ImageDraw
-
-from quad_constants import * #constants
-
 import heapq
 import sys
 
-global new_img_name
+from PIL import Image
+from PIL import ImageDraw
 
 
-#---------------------------------------------
-#Helper functions for histograms
+ITERATIONS = 1024 # 2^N of how small to decompose the image
+LEAF_SIZE = 4
+PADDING = 1
+FILL_COLOR = (0,0,0)
+SAVE_FRAMES = True # save individual decomposition step frames
+ERROR_RATE = 0.5
+AREA_POWER = 0.25
+OUTPUT_SCALE = 1
 
-def avg(histogram):
-    """this functions get the weighted average of a histogram"""
-
-    total = sum(histogram)
-    value = 0
-
-    for i, x in enumerate(histogram):
-        value += i * x
-    value /= total
-
-    error = 0
-    for i, x in enumerate(histogram):
-        error += x * (value - i) ** 2
-    error /= total
-    error = error ** 0.5
-    
-    return value, error
-
-def get_color_histogram(histogram):
-    """this function gets the color from a histogram"""
-
-    r, r1 = avg(histogram[:256])
-    g, g1 = avg(histogram[256:512])
-    b, b1 = avg(histogram[512:768])
-    e1 = r1 * 0.2989 + g1 * 0.5870 + b1 * 0.1140
-
-    return (r,g,b), e1
-
-#---------------------------------------------
-#Classes
 
 class Quad(object):
     
@@ -67,8 +38,6 @@ class Quad(object):
         return (r-l) * (b-t)
 
     def split(self):
-        """splits the image into a quad, compresses by 2^N"""
-
         l,t,r,b = self.box
         lr = l + (r-l)/2
         tb = t + (b-t)/2
@@ -107,7 +76,6 @@ class ImageModel(object):
         self.error_sum = self.root.error * self.root.area
         self.push(self.root)
 
-    
     @property #adds property version to quads
     def quads(self):
         return [x[-1] for x in self.heap]
@@ -132,8 +100,6 @@ class ImageModel(object):
             self.error_sum += child.error * child.area
 
     def render(self, path, max_depth=None):
-        """creates new image"""
-
         m = OUTPUT_SCALE
         dx, dy = (PADDING, PADDING)
         
@@ -151,9 +117,33 @@ class ImageModel(object):
         im.save(path, 'PNG')
 
 
-def convert_image(img_name):
-    """Converts image to its quadtree decomp. representation."""
+def avg(histogram):
+    total = sum(histogram)
+    value = 0
 
+    for i, x in enumerate(histogram):
+        value += i * x
+    value /= total
+
+    error = 0
+    for i, x in enumerate(histogram):
+        error += x * (value - i) ** 2
+    error /= total
+    error = error ** 0.5
+    
+    return value, error
+
+
+def get_color_histogram(histogram):
+    r, r1 = avg(histogram[:256])
+    g, g1 = avg(histogram[256:512])
+    b, b1 = avg(histogram[512:768])
+    e1 = r1 * 0.2989 + g1 * 0.5870 + b1 * 0.1140
+
+    return (r,g,b), e1
+
+
+def convert_image(img_name):
     img = ImageModel(img_name)
     previous = None
 
@@ -161,15 +151,15 @@ def convert_image(img_name):
         error = img.average_error()
 
         if previous is None or previous - error > ERROR_RATE:
-            #print i, error
-    
             if SAVE_FRAMES:
-                img.render('frames/%06d.png' % i)
+                img.render('frame_%06d.png' % i)
 
             previous = error 
 
         img.split()
-    print "Finished splitting image" 
-    
+
     new_img_name = 'QUAD' + img_name
     img.render(new_img_name)
+
+    return new_img_name
+

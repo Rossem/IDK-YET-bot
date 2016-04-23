@@ -1,4 +1,4 @@
-from image import *
+from imagetree import *
 
 import praw
 import bot
@@ -90,29 +90,6 @@ def main():
                     shutil.copyfileobj(response.raw, out_file)
                 del response
 
-                """
-
-                img = ImageModel(img_name)
-                previous = None
-
-                for i in range(ITERATIONS):
-                    error = img.average_error()
-
-                    if previous is None or previous - error > ERROR_RATE:
-                        #print i, error
-                        
-                        if SAVE_FRAMES:
-                            img.render('frames/%06d.png' % i)
-
-                        previouse = error 
-                    
-                    img.split()
-                print "Finished splitting image"
-
-                new_img_name = 'QUAD' + img_name
-                img.render(new_img_name)
-                """
-                
                 convert_image(img_name)
 
                 new_img_url = client.upload_from_path('QUAD' + img_name)

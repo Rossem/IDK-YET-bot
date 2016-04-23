@@ -1,6 +1,7 @@
-# QUADBot
+# ImageTree
 
-A reddit bot which decomposes images using the quadtree data structure.
+Algorithm to decompose an image into its quad tree representation. An example of the algorithm at use can be found at http://i.imgur.com/HNGHEVY.gifv.
+
 
 resources used: 
 
